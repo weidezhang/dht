@@ -29,6 +29,8 @@ svc/
 
    - protocol files for the above programs
 
+paxos/ 
+   - support the paxos transactions that chord client needs to keep track of write operations 
 
 This software is experimental and under active development. Please
 send bug reports/fixes to chord-dev@pdos.lcs.mit.edu.
