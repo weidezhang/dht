@@ -44,14 +44,22 @@ dhblock_replicated_srv::dhblock_replicated_srv (ptr<vnode> node,
 						str msock,
 						str dbsock,
 						str dbname,
-						ptr<chord_trigger_t> t) :
-  dhblock_srv (node, cli, ctype, msock, dbsock, dbname, true, t),
+						ptr<chord_trigger_t> t,
+						str paxossock) :
+  dhblock_srv (node, cli, ctype, msock, dbsock, dbname, true, t,paxossock),
   last_repair (node->my_pred ()->id ()),
   maint_pending (false),
   stale_repairs (0)
 {
   maint_initspace (dhblock_replicated::num_replica (),
                    dhblock_replicated::num_replica (), t);
+  if(paxossock != "") 
+ {
+     paxos_init();
+     paxos_avail = true;  
+  } 
+  
+  
 }
 
 void

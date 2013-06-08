@@ -57,7 +57,7 @@ protected:
 
 public:
   dhblock_replicated_srv (ptr<vnode> node, ptr<dhashcli> cli,
-    dhash_ctype c, str msock, str dbsock, str dbname, ptr<chord_trigger_t> t);
+    dhash_ctype c, str msock, str dbsock, str dbname, ptr<chord_trigger_t> t,str paxosoc=""); 
 
   void stats (vec<dstat> &s);
   virtual void store (chordID key, str d, u_int32_t expire, cb_dhstat cb);

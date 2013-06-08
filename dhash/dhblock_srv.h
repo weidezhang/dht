@@ -7,6 +7,7 @@
 #include <qhash.h>
 #include <libadb.h>
 #include <maint_prot.h>
+#include <paxos_prot.h>
 
 class vnode;
 class dhashcli;
@@ -49,17 +50,25 @@ class dhblock_srv : virtual public refcount {
   void maintgetrepairscb (maint_getrepairsres *res,
     cb_maintrepairs_t cbr, clnt_stat err);
 
+  //Paxos callbacks 
+  void paxosinitcb(paxos_status * res, clnt_stat err); 
+ 
+  
+
  protected:
   const dhash_ctype ctype;
   str prefix () const;
 
   ptr<adb> db;
   ptr<aclnt> maint;
+  ptr<aclnt> paxost; 
+  
 
   const ptr<vnode> node;
 
   ptr<dhashcli> cli;
 
+  bool paxos_avail; 
   enum {
     REPAIR_OUTSTANDING_MAX = 16,
     REPAIR_QUEUE_MAX = 64
@@ -87,6 +96,7 @@ class dhblock_srv : virtual public refcount {
 
   // Maint RPC helpers and stubs 
   static ptr<aclnt> get_maint_aclnt (str msock);
+  static ptr<aclnt> get_paxos_aclnt (str msock);
   void maint_initspace (int efrags, int dfrags, ptr<chord_trigger_t> t);
   void maint_getrepairs (int thresh, int count, chordID start,
     cb_maintrepairs_t cbr);
@@ -98,7 +108,7 @@ class dhblock_srv : virtual public refcount {
  public:
   dhblock_srv (ptr<vnode> node, ptr<dhashcli> cli,
     dhash_ctype c, str msock, str dbsock, str dbname, bool hasaux,
-    ptr<chord_trigger_t> donecb);
+    ptr<chord_trigger_t> donecb, str paxsock="");
   virtual ~dhblock_srv ();
 
   virtual void start (bool randomize);
@@ -109,6 +119,7 @@ class dhblock_srv : virtual public refcount {
   virtual void store (chordID k, str d, u_int32_t expire, cb_dhstat cb) = 0;
   virtual void fetch (chordID k, cb_fetch cb);
   virtual ptr<adb> get_db () { return db; };
+   void paxos_init(); 
 };
 
 #endif /* _DHBLOCK_SRV_H_ */

@@ -52,6 +52,7 @@ public:
       (callback) (s, b, r);
     }
 
+
     rcv_state (blockID key, cb_ret cb) :
       key (key),
       errors (0),
@@ -138,6 +139,9 @@ private:
 		   chord_node dest,
 		   int retry_num);
 
+ 
+void  queryndlist_cb(ptr<rcv_state> rs, vec<chord_node> succs, route r, chordstat status);
+
 public:
   dhashcli (ptr<vnode> node, ptr<dhash> dh);
 
@@ -145,6 +149,8 @@ public:
   void retrieve (blockID blockID, cb_ret cb, 
 		 int options = 0, 
 		 ptr<chordID> guess = NULL);
+
+  void queryndlist(blockID blockID, cb_ret cb); 
 
   void insert (ref<dhash_block> block, cbinsert_path_t cb, 
 	       int options = 0, 

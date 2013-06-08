@@ -108,8 +108,16 @@ dhashgateway::dispatch (svccb *sbp)
 	 wrap (mkref (this), &dhashgateway::retrieve_cb, sbp),
 	 arg->options, guess);
     }
-    break;
+    break; 
 
+   case DHASHPROC_NDLIST:
+   {
+      dhash_nodelist_arg *arg = sbp->Xtmpl getarg<dhash_nodelist_arg> ();
+        
+      dhcli->queryndlist
+	(blockID (arg->blockID, arg->ctype),
+	 wrap (mkref (this), &dhashgateway::nodelist_cb, sbp));
+   }
   default:
     sbp->reject (PROC_UNAVAIL);
     break;
@@ -154,5 +162,15 @@ dhashgateway::retrieve_cb (svccb *sbp, dhash_stat stat,
     memcpy (res.resok->block.base (), block->data.cstr (), block->data.len ());
   }
   sbp->reply (&res);
+}
+
+void
+dhashgateway::ndlist_cb(svccb * sbp, dhash_stat stat, ptr<dhash_block> block, route path)
+{
+	dhash_retrieve_res res;
+	res.stat = stat; 
+	res.path = path; 
+	sbp->reply(&res); 
+
 }
 

@@ -67,7 +67,7 @@ class dhash {
   static u_long dhash_disable_db_env ();
 
   static ref<dhash> produce_dhash (ptr<vnode> v, str dbsock, str msock,
-      ptr<chord_trigger_t> trigger);
+      ptr<chord_trigger_t> trigger, str paxosock);
 
   virtual ~dhash () = 0;
 

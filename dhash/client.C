@@ -159,6 +159,32 @@ dhashcli::retrieve (blockID blockID, cb_ret cb, int options,
 }
 
 
+//given the node and replica list for the given block id 
+void 
+dhashcli::queryndlist(blockID blockID, cb_ret cb)
+{
+	//have chord node to query the successor list of the current 
+	ptr<rcv_state> rs = New refcounted<rcv_state>(blockID, cb); 
+	clntnode -> find_succlist(block->id_to_dbkey(blockID.ID), block->num_fetch(), wrap(this, &dhashcli::queryndlit_cb,rs,block)); 
+
+}
+
+void
+dhshcli::queryndlist_cb(ptr<rcv_state> rs, vec<chord_node> succs, route r, chordstat status)
+{
+	
+	vec<chord_node> unique_succs;
+	//filter_succs (succs, unique_succs); we dont do any filtering here 
+	size_t numacceptor = dhblock_chash().num_fetch(); 
+	rs-> r = r; 
+        rs ->succs = succs; 
+
+	//if(succs.size() < numacceptor)  to do , check if the succsessor list size is smaller than expected number of acceptors 
+	
+	rs->complete(DHASH_OK, NULL); 
+
+}
+
 
 void
 dhashcli::retrieve_lookup_cb (ptr<rcv_state> rs, ptr<dhblock> block,

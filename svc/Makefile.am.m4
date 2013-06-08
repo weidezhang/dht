@@ -57,6 +57,7 @@ rpcmk(accordion_prot)
 rpcmk(transport_prot)
 rpcmk(adb_prot)
 rpcmk(maint_prot)
+rpcmk(paxos_prot)
 
 $(DEP_FILES): rpcmk_headers
 
@@ -67,8 +68,8 @@ libsvc_la_SOURCES = rpcmk_sources
 noinst_HEADERS = rpcmk_xfiles rpcmk_headers
 
 chordlib_LTLIBRARIES = libsvc.la
-chordinclude_HEADERS =  chord_types.x dhash_types.x dhashgateway_prot.x dhash_types.h chord_types.h dhash_prot.h dhashgateway_prot.h lsdctl_prot.h
-chorddata_DATA = chord_types.py dhash_types.py dhashgateway_prot.py bigint.py
+chordinclude_HEADERS =  chord_types.x dhash_types.x dhashgateway_prot.x paxos_prot.x dhash_types.h chord_types.h dhash_prot.h dhashgateway_prot.h lsdctl_prot.h paxos_prot.h 
+chorddata_DATA = chord_types.py dhash_types.py dhashgateway_prot.py bigint.py paxos_prot.h 
 
 dist-hook:
 	cd $(distdir) && rm -f rpcmk_built

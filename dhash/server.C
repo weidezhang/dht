@@ -102,9 +102,9 @@ DECL_CONFIG_METHOD(dhash_disable_db_env, "dhash.disable_db_env")
 dhash::~dhash () {}
 
 ref<dhash>
-dhash::produce_dhash (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t)
+dhash::produce_dhash (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t,str paxosock)
 {
-  return New refcounted<dhash_impl> (v, dbsock, msock, t);
+  return New refcounted<dhash_impl> (v, dbsock, msock, t,paxosock);
 }
 
 dhash_impl::~dhash_impl ()
@@ -112,7 +112,7 @@ dhash_impl::~dhash_impl ()
 }
 
 dhash_impl::dhash_impl (ptr<vnode> node, str dbsock, str msock,
-    ptr<chord_trigger_t> t) :
+    ptr<chord_trigger_t> t, str paxossock) :
   host_node (node),
   cli (NULL),
   bytes_stored (0),
@@ -128,12 +128,12 @@ dhash_impl::dhash_impl (ptr<vnode> node, str dbsock, str msock,
       wrap (this, &dhash_impl::srv_ready, t));
 
   srv = New refcounted<dhblock_chash_srv> (node, cli, msock,
-      dbsock, "chash.c", dhashtrigger);
+      dbsock, "chash.c", dhashtrigger,paxossock);
   blocksrv.insert (DHASH_CONTENTHASH, srv);
 
   srv = New refcounted<dhblock_keyhash_srv> (node, cli, msock,
       dbsock, "keyhash.k",
-      dhashtrigger);
+      dhashtrigger, paxossock);
   blocksrv.insert (DHASH_KEYHASH, srv);
 
   srv = New refcounted<dhblock_noauth_srv> (node, cli, msock,
@@ -212,6 +212,7 @@ dhash_impl::dispatch (user_args *sbp)
     break;
   case DHASHPROC_FETCHITER:
     {
+      warn<<"dhash fetch iter received for vnode"<<host_node->my_ID()<<"\n"; 
       s_dhash_fetch_arg *farg = sbp->Xtmpl getarg<s_dhash_fetch_arg> ();
       blockID id (farg->key, farg->ctype);
 

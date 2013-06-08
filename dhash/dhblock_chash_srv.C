@@ -55,9 +55,10 @@ dhblock_chash_srv::dhblock_chash_srv (ptr<vnode> node,
 				      str msock,
 				      str dbsock,
 				      str dbname,
-				      ptr<chord_trigger_t> t) :
+				      ptr<chord_trigger_t> t, 
+				      str paxosock) :
   dhblock_srv (node, cli, DHASH_CONTENTHASH, msock,
-      dbsock, dbname, false, t),
+      dbsock, dbname, false, t, paxosock),
   last_repair (node->my_pred ()->id ()),
   maint_pending (false),
   cache_hits (0),
@@ -67,6 +68,12 @@ dhblock_chash_srv::dhblock_chash_srv (ptr<vnode> node,
   cache_db = New refcounted<adb> (dbsock, "ccache", false, t);
   maint_initspace (dhblock_chash::num_efrags (),
 		   dhblock_chash::num_dfrags (), t);
+  if(paxosock != "")
+  {	
+  	paxos_init(); //initialize paxos for content hashing 
+  	paxos_avail = true; 
+  }
+  
 }
 
 dhblock_chash_srv::~dhblock_chash_srv ()

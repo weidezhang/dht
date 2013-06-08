@@ -68,6 +68,14 @@ struct dhash_retrieve_resok {
   chordID path<>;
 };
 
+struct dhash_ndlist_resok
+{
+   dhash_stat stat; 
+   		
+
+};
+
+
 struct dhash_insert_resok {
   chordID path<>;
 };
@@ -96,5 +104,7 @@ program DHASHGATEWAY_PROGRAM {
 
                 dhash_retrieve_res
 		DHASHPROC_RETRIEVE (dhash_retrieve_arg) = 2;
+		dhash_ndlist_res
+		DHASHPROC_
 	} = 1;
 } = 344448;

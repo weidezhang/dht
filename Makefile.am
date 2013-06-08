@@ -2,7 +2,7 @@
 # $Id: Makefile.am,v 1.41 2006/08/16 17:03:54 sit Exp $
 
 
-SUBDIRS = svc utils merkle chord dhash maint lsd tools
+SUBDIRS = svc utils merkle chord dhash maint lsd tools paxos
 chordinclude_HEADERS = config.h
 
 CLEANFILES = core *.core *~

@@ -238,6 +238,9 @@ void gotinode_cb(dhash_stat st, ptr<dhash_block> bl, vec<chordID> vc) {
   if(outfile == NULL)
     fatal("can't open file for writing\n");
 
+  warn<<"get the innode , retrieving the content for the inode\n"; 
+  
+
   chordID ID;
   for(unsigned int i=0; i<(in.blen); i+=sha1::hashsize) {
     mpz_set_rawmag_be(&ID, in.buf+i, sha1::hashsize);
@@ -245,6 +248,19 @@ void gotinode_cb(dhash_stat st, ptr<dhash_block> bl, vec<chordID> vc) {
 			     (BLOCKSIZE/sha1::hashsize)*(i*BLOCKSIZE/20)));
     warnx << "retrieve " << ID << "\n";
   }
+}
+
+
+void updateinode_cb(chordID & id, char * locfile, dhash_stat st, ptr<dhash_block> bl,vec<chordID> vc)
+{
+	if(st != DHASH_OK)
+		fatal("lost node in update\n"); 
+
+	warn<<"find the key for local file\n, starting to do update\n"; 
+
+	
+	store(locfile); 
+
 }
 
 void store_send(FILE *f, indirect *in, inode *n) {
@@ -261,12 +277,17 @@ void store_send(FILE *f, indirect *in, inode *n) {
     len = fread(buf, 1, BLOCKSIZE, f);
     warnx << "len " << len << " inflight " << inflight << "\n";
     ID = write_block(buf, len);
-
+    warnx << "ID for current block is " << ID  << "\n";
+   
     in->add_hash(ID);
   } while(len == BLOCKSIZE);
 
+  warnx <<"before sending in writeout"<<"\n"; 
+
   in->write_out();
+  warnx <<"before sending n writeout"<<"\n"; 
   n->write_out();
+  warnx <<"before delete in and n"<<"\n"; 
   delete in;
   delete n;
 }
@@ -306,13 +327,24 @@ int main(int argc, char *argv[]) {
     str2chordID(name, ID);
     dhash->retrieve(ID, wrap(&list_cb));
 
-  } else if(!strcmp(cmd, "-f")) {
+  }
+  else if(!strcmp(cmd, "-f")) {
     // retrieve
+    
     str2chordID(name, ID);
     dhash->retrieve(ID, wrap(&gotinode_cb));
     warnx << "retrieve " << ID << "\n";
 
-  } else {
+  } 
+  else if (!strcmp(cmd, "-u"))
+  {
+	//update the data
+	char* locname = argv[4]; 
+	str2chordID(name, ID); 
+	dhash->update(ID, wrap(&updateinode_cb,ID, locname)); 
+	warn<<"starting updated file "<<ID<<"\n"; 
+  }
+  else {
     fatal("Usage: filestore sockname -[fls] filename_or_hash"
 	  " num_RPCs_in_flight\n");
   }

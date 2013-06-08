@@ -518,6 +518,7 @@ usage ()
   warnx << "Usage: " << progname << " -j hostname:port -p port\n"
     "Options:\n"
     "  DHash/Chord configuration:\n"
+    "    [-A <paxos socket>]\n" 
     "    [-v <number of vnodes>]\n"
     "    [-l <locally bound IP>]\n"
     "    [-m successors|chord|pns|pnsrec|...]\n"
@@ -585,10 +586,14 @@ main (int argc, char **argv)
   my_name = my_addr ();
   p2psocket = "/tmp/chord-sock";
   ctlsocket = "/tmp/lsdctl-sock";
+  str paxosocket = "/tmp/paxos-sock"; 
+  
   mode = MODE_CHORD;
 
-  while ((ch = getopt (argc, argv, "b:C:d:fFH:j:l:L:M:m:n:O:Pp:R:rS:s:T:tv:D"))!=-1)
+  while ((ch = getopt (argc, argv, "A:b:C:d:fFH:j:l:L:M:m:n:O:Pp:R:rS:s:T:tv:D"))!=-1)
     switch (ch) {
+    case 'A':
+	paxosocket = optarg;	
     case 'C':
       ctlsocket = optarg;
       break;
@@ -764,7 +769,7 @@ main (int argc, char **argv)
     ptr<vnode> v = chordnode->get_vnode (i);
     dh.push_back (
       dhash::produce_dhash (v, dbsock, maintsock,
-	chord_trigger_t::alloc (wrap (&finish_start))));
+	chord_trigger_t::alloc (wrap (&finish_start)), paxosocket));
   }
 
   // Initialize for use by LSDCTL_GETLSDPARAMETERS

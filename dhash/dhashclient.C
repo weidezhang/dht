@@ -184,6 +184,77 @@ dhashclient::insertcb (cbinsertgw_t cb, bigint key,
   }
 }
 
+/*update the files 
+*/ 
+
+
+void 
+dhashclient::paxos_cb(dver vid ,cb_cret cb, bigint key, ref<paxos_status> stat, 
+				 clnt_stat err)
+{
+	  warnx<<"paxos call back received for  "<<key<<"\n"; 
+	  paxos_status stat; 
+	  
+	  if(ret)
+	  {
+		stat = PAXOS_RPC_ERROR; 
+
+	  }
+	  else
+	  {
+		//using multicast to listen to the paxos decision from acceptors
+		while(1)
+		{
+			multicast_msg * msg; 
+			mmsg = mcast_recv(pr); 
+
+			assert(msg-> type == PAXOS_ACC_VER); 
+
+			if(msg -> umsec > arg->msec)
+			{
+
+
+
+				if( msg->dver == arg->dver)
+				{
+					warn<<"get accepted by acceptor\n"; 
+					
+
+				}
+				else
+				{
+					warn<<"not able to get accepted by acceptor\n"; 
+
+				}
+			}
+
+
+		}
+
+
+	  }
+	  (*cb) (ret, NULL, e_path); 
+}
+
+
+
+void
+dhashclient::update (bigint key, cb_cret cb)
+{
+	 //starting to use paxos to submit transactions 
+
+	 ref<paxos_client_arg> arg = New refcounted<paxos_client_arg> ();
+	 ref<paxos_status > stat  = New refcounted<paxos_status>(); 
+
+	 
+	 arg->id= key; 
+	 arg->vid = 255; 
+	 paxosint->call(PAXOS_CLIENT_REQ, &arg,stat,wrap(this, &dhashclient::paxos_cb, vid, cb, key,stat)); 
+	 
+}
+
+
+
 /*
  * retrieve code
  */
@@ -197,6 +268,9 @@ void
 dhashclient::retrieve (bigint key, dhash_ctype ct, cb_cret cb, 
 		       ptr<option_block> options)
 {
+  warnx<<"going to retrieve with key  "<<key<<"\n"; 
+	  
+
   ref<dhash_retrieve_res> res = New refcounted<dhash_retrieve_res> (DHASH_OK);
   dhash_retrieve_arg arg;
   arg.blockID = key;
@@ -217,6 +291,8 @@ dhashclient::retrievecb (cb_cret cb, bigint key,
 			 ref<dhash_retrieve_res> res, 
 			 clnt_stat err)
 {
+  warnx<<"starting retrieveing block for key "<<key<<"\n"; 
+  
   str errstr;
   dhash_stat ret (res->status);
   if (err) {
@@ -234,6 +310,13 @@ dhashclient::retrievecb (cb_cret cb, bigint key,
     } else {
       // success
       vec<str> contents = get_block_contents (block_data, res->resok->ctype);
+
+      for(size_t i=0;i<contents.size(); ++i)
+      {
+           warnx<<"content block "<<i <<" is "<<contents[i]<<"\n"; 
+
+       }
+
 
       ptr<dhash_block> blk;
       if (contents.size () == 1)

@@ -21,17 +21,21 @@ dhblock_srv::dhblock_srv (ptr<vnode> node,
 			  str dbsock,
 			  str dbname,
 			  bool hasaux,
-			  ptr<chord_trigger_t> t) :
+			  ptr<chord_trigger_t> t,
+			  str pxsock ) :
   repair_tcb (NULL),
   ctype (c),
   db (New refcounted<adb> (dbsock, dbname, hasaux, t)),
   maint (get_maint_aclnt (msock)),
+  paxost(get_paxos_aclnt(pxsock)), 
   node (node),
   cli (cli),
+  paxos_avail(false), 
   repair_read_bytes (0),
   repair_sent_bytes (0),
   repairs_completed (0),
-  expired_repairs (0)
+  expired_repairs (0) 
+  
 {
   warn << "opened " << dbsock << " with space " << dbname 
        << (hasaux ? " (hasaux)\n" : "\n");
@@ -75,6 +79,22 @@ dhblock_srv::get_maint_aclnt (str msock)
   return c;
 }
 
+ptr<aclnt>
+dhblock_srv::get_paxos_aclnt (str msock)
+{
+
+  if(msock == "") return NULL; 
+  
+  int fd = unixsocket_connect (msock);
+  if (fd < 0)
+    fatal ("get_maint_aclnt: Error connecting to %s: %m\n", msock.cstr ());
+  make_async (fd);
+  ptr<aclnt> c = aclnt::alloc (axprt_unix::alloc (fd, 1024*1025),
+      paxos_program_1);
+  return c;
+}
+
+
 void
 dhblock_srv::maint_initspace (int efrags, int dfrags, ptr<chord_trigger_t> t)
 {
@@ -90,6 +110,36 @@ dhblock_srv::maint_initspace (int efrags, int dfrags, ptr<chord_trigger_t> t)
   maint->call (MAINTPROC_INITSPACE, &dhi, res,
       wrap (this, &dhblock_srv::maintinitcb, t, res));
 }
+
+void 
+dhblock_srv::paxos_init()
+{
+	paxos_dhashinfo_t dhi; 
+	node->my_location ()->fill_node (dhi.host);
+        dhi.ctype = ctype;
+        dhi.dbsock = db->dbsock ();
+        dhi.dbname = db->name ();
+        dhi.hasaux = db->hasaux ();
+	paxos_status * res = New paxos_status(PAXOS_OK); 
+	paxost->call(PAXOS_INIT, &dhi, res, wrap(this, &dhblock_srv::paxosinitcb,res)); 
+
+	warn<<"end of calling paxos_init\n"; 
+	
+}
+
+void 
+dhblock_srv::paxosinitcb(paxos_status * res, clnt_stat err)
+{
+	if (err || *res)
+	  warn << "Paxos initialization failed for " 
+		<< db->name () << ": " << err << "/" << *res << "\n";
+	delete res;
+
+	warn<<"Paxos initialization succeeds"; 
+
+	
+}
+
 
 void
 dhblock_srv::maintinitcb (ptr<chord_trigger_t> t, maint_status *res, clnt_stat err)

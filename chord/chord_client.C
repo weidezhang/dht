@@ -212,6 +212,8 @@ chord::get_vnode (unsigned int i)
 {
   if (i > vlist.size ()) 
     return NULL;
+    warn<<"vnode added is "<<vlist[i]->my_ID()<<"\n"; 
+	
   return vlist[i];
 }
 

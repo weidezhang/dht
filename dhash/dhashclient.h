@@ -91,6 +91,12 @@ public:
   void retrieve (bigint key, dhash_ctype ct, cb_cret cb, 
 		 ptr<option_block> options = NULL);
 
+  //update block and verify 
+  void update(bigint key, cb_cret cb); 
+
+
+  //support querying nodelist from chord 
+  //void queryndlist(bigint key, cb_cret cb); 
 };
 
 #endif

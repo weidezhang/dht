@@ -63,6 +63,8 @@ my $found = 1;
 my $LSD   = "lsd";
 my $ADBD  = "adbd";
 my $MAINTD = "maintd";
+my $PAXOSD = "paxosd"; 
+
 for my $rawbindir ($userbindir, ".", split(/:/, $ENV{PATH})) {
     next unless length($rawbindir) > 0;
     my $bindir = $rawbindir;
@@ -80,14 +82,16 @@ for my $rawbindir ($userbindir, ".", split(/:/, $ENV{PATH})) {
 	$LSD    = "$bindir/lsd/lsd";
 	$ADBD   = "$bindir/lsd/adbd";
 	$MAINTD = "$bindir/maint/maintd";
+	$PAXOSD = "$bindir/paxos/paxosd";
     } elsif (-x "$bindir/lsd" and ! -d _) {
 	# e.g. bindir=/usr/bin
 	$LSD    = "$bindir/lsd";
 	$ADBD   = "$bindir/adbd";
 	$MAINTD = "$bindir/maintd";
+	$PAXOSD = "$bindir/paxosd";
     } 
     $found = 1;
-    for ($LSD, $ADBD, $MAINTD) {
+    for ($LSD, $ADBD, $MAINTD, $PAXOSD) {
 	$found = $found && (-f $_ && -x _);
     }
     last if $found;
@@ -121,6 +125,9 @@ $PID{maintd} = spawn ($root, $MAINTD, "maintd",
 		     "-d", "./maintdata",
 		     "-m", $maintmode,
 		     "-C", "./maint-sock", @daemonizearg);
+$PID{paxosd} = spawn ($root, $PAXOSD, "paxosd",
+		     "-d", "./paxosdata",
+		     "-C", "./paxos-sock", @daemonizearg);
 my $lsd_started = 0;
 
 # Keep this process running until kids come home, unless $daemonize.
@@ -136,6 +143,8 @@ while (keys %PID) {
 	    "-S", "./dhash-sock",
 	    "-R", "./maint-sock",
 	    "-C", "./lsd-sock",
+        "-A", "./paxos-sock",
+        "-v", "5",  
 	    @daemonizearg,
 	    @ARGV);
 	$lsd_started = 1;
