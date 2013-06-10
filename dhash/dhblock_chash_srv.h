@@ -25,7 +25,7 @@ class dhblock_chash_srv : public dhblock_srv {
 
 public:
   dhblock_chash_srv (ptr<vnode> node, ptr<dhashcli> cli,
-      str msock, str dbsock, str dbname, ptr<chord_trigger_t> t,str paxosock);
+      str msock, str dbsock, str dbname, ptr<chord_trigger_t> t,str paxosock, str p2psock);
   ~dhblock_chash_srv ();
 
   void stats (vec<dstat> &s);

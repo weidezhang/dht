@@ -1,5 +1,7 @@
 %#include <chord_types.h>
 %#include <dhash_types.h>
+%#include <location.h> 
+%#include <paxos_prot.h> 
 
 %#if 0
 %# Imports for Python
@@ -68,17 +70,28 @@ struct dhash_retrieve_resok {
   chordID path<>;
 };
 
-struct dhash_ndlist_resok
-{
-   dhash_stat stat; 
-   		
 
+struct dhash_nodelist_arg
+{
+    chordID blockID; //the key 
+    dhash_ctype ctype; 
 };
+
+
+struct dhash_ndlist_res
+{
+    bool success; 
+    chord_node  route<>; 			
+}; 
+
+
 
 
 struct dhash_insert_resok {
   chordID path<>;
 };
+
+
 
 union dhash_insert_res switch (dhash_stat status) {
  case DHASH_OK:
@@ -105,6 +118,10 @@ program DHASHGATEWAY_PROGRAM {
                 dhash_retrieve_res
 		DHASHPROC_RETRIEVE (dhash_retrieve_arg) = 2;
 		dhash_ndlist_res
-		DHASHPROC_
+		DHASHPROC_NDLIST (dhash_nodelist_arg) =3; 
+		paxos_prepres 
+		DHASHPROC_PAXOS_PREP (paxos_prep_arg) =4; 
+		paxos_accept_res
+		DHASHPROC_PAXOS_ACC (paxos_accept_arg) =5; 
 	} = 1;
 } = 344448;

@@ -45,8 +45,9 @@ dhblock_replicated_srv::dhblock_replicated_srv (ptr<vnode> node,
 						str dbsock,
 						str dbname,
 						ptr<chord_trigger_t> t,
-						str paxossock) :
-  dhblock_srv (node, cli, ctype, msock, dbsock, dbname, true, t,paxossock),
+						str paxossock, 
+						str p2psock) :
+  dhblock_srv (node, cli, ctype, msock, dbsock, dbname, true, t,paxossock,p2psock),
   last_repair (node->my_pred ()->id ()),
   maint_pending (false),
   stale_repairs (0)

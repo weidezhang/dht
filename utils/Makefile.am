@@ -16,7 +16,12 @@ noinst_HEADERS = \
 	ida-field.C \
 	libadb.h \
 	rpclib.h \
-	dbfe.h
+	dbfe.h \
+	multicast.h \
+	libpaxos_priv.h \
+	config.h \
+	libpaxos.h \
+	event_counters.h
 
 libutil_a_SOURCES = \
 	configurator.C \
@@ -31,6 +36,9 @@ libutil_a_SOURCES = \
 	libadb.C \
 	rpclib.C \
 	dbfe_sleepycat.C \
+        mcast.C \
+	multicast_recv.C \
+	multicast_send.C \
 	dbfe.C
 
 libadb_a_SOURCES = libadb.C

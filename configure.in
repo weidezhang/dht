@@ -77,7 +77,7 @@ done
 LDFLAGS="$new_LDFLAGS"
 
 dnl let directories share header files
-for lib in utils merkle chord dhash svc lsd; do
+for lib in utils merkle chord dhash svc lsd paxos; do
     CPPFLAGS="-I"'$(top_srcdir)'"/$lib $CPPFLAGS"
 done
     CPPFLAGS="-I"'$(top_builddir)'"/svc $CPPFLAGS"

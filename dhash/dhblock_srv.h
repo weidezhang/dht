@@ -83,6 +83,11 @@ class dhblock_srv : virtual public refcount {
 
   bhash<str> repairs_queued;
   bhash<str> repairs_inprogress;
+
+  //p2p socket for dhash 
+  str p2psocket; 
+
+  
   // RepInv:
   //   for i in repair_q: repairs_queued[i.key]
   //   and there are no other repairs queued.
@@ -108,7 +113,7 @@ class dhblock_srv : virtual public refcount {
  public:
   dhblock_srv (ptr<vnode> node, ptr<dhashcli> cli,
     dhash_ctype c, str msock, str dbsock, str dbname, bool hasaux,
-    ptr<chord_trigger_t> donecb, str paxsock="");
+    ptr<chord_trigger_t> donecb, str paxsock="", str p2psock="");
   virtual ~dhblock_srv ();
 
   virtual void start (bool randomize);

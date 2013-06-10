@@ -6,6 +6,8 @@
 #include <list.h>
 #include <async.h>
 #include <arpc.h>
+#include "paxos_prot.h" 
+
 
 struct insert_info
 {
@@ -23,6 +25,10 @@ class keyhash_payload;
 typedef callback<void, dhash_stat, ptr<insert_info> >::ref cbinsertgw_t;
 typedef
   callback<void, dhash_stat, ptr<dhash_block>, vec<chordID> >::ptr cb_cret;
+typedef 
+  callback<void, dhash_stat >::ptr cb_cret2; 
+
+
 
 struct option_block
 {
@@ -35,6 +41,7 @@ class dhashclient
 {
 protected:
   ptr<aclnt> gwclnt;
+  ptr<aclnt> paxoslnt; 
   dhashclient () {};
 
 private:
@@ -56,12 +63,11 @@ private:
 public:
   // sockname is the unix path (ex. /tmp/chord-sock) used to
   // communicate to lsd. 
-  dhashclient (str sockname);
+  dhashclient (str sockname, str paxos="");
 
   // this version connects to the dhash service on TCP
-  dhashclient (ptr<axprt_stream> xprt);
-
-  // Deal with potentially too large blocks.
+  dhashclient (ptr<axprt_stream> xprt, ptr<axprt_stream> xprt2=NULL); 
+  // Deal with potentially too large blocks
   void seteofcb (cbv::ptr);
 
   void append (chordID to, const char *buf, size_t buflen, cbinsertgw_t cb);
@@ -92,7 +98,11 @@ public:
 		 ptr<option_block> options = NULL);
 
   //update block and verify 
-  void update(bigint key, cb_cret cb); 
+  void update(bigint key, cb_cret2 cb); 
+  void 
+   paxos_cb(dver vid ,cb_cret2 cb, bigint key, ptr<paxos_status> stat, 
+				 clnt_stat err); 
+  
 
 
   //support querying nodelist from chord 

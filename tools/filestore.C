@@ -250,8 +250,9 @@ void gotinode_cb(dhash_stat st, ptr<dhash_block> bl, vec<chordID> vc) {
   }
 }
 
+void store(char *name); 
 
-void updateinode_cb(chordID & id, char * locfile, dhash_stat st, ptr<dhash_block> bl,vec<chordID> vc)
+void updateinode_cb(chordID  id, char * locfile, dhash_stat st)
 {
 	if(st != DHASH_OK)
 		fatal("lost node in update\n"); 
@@ -309,14 +310,14 @@ void store(char *name) {
 
 int main(int argc, char *argv[]) {
   if(argc != 5)
-    fatal("Usage: filestore sockname -[fls] filename_or_hash"
-	  " num_RPCs_in_flight\n");
+    fatal("Usage: filestore dhashsockname paxossock -[fls] filename_or_hash"
+	  " num_RPCs_in_flight updatedlocalfilename \n");
 
-  dhash = New dhashclient(argv[1]);
+  dhash = New dhashclient(argv[1],argv[2]);
   chordID ID;
-  char *cmd = argv[2];
-  char *name = argv[3];
-  maxinflight = atoi(argv[4]);
+  char *cmd = argv[3];
+  char *name = argv[4];
+  maxinflight = atoi(argv[5]);
 
   if(!strcmp(cmd, "-s")) {
     // store
@@ -339,7 +340,7 @@ int main(int argc, char *argv[]) {
   else if (!strcmp(cmd, "-u"))
   {
 	//update the data
-	char* locname = argv[4]; 
+	char* locname = argv[6]; 
 	str2chordID(name, ID); 
 	dhash->update(ID, wrap(&updateinode_cb,ID, locname)); 
 	warn<<"starting updated file "<<ID<<"\n"; 

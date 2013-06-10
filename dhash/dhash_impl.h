@@ -116,7 +116,7 @@ class dhash_impl : public dhash, public virtual refcount {
   u_int64_t objects_served;
 
  public:
-  dhash_impl (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t,str paxossock);
+  dhash_impl (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t,str paxossock, str p2psock);
   ~dhash_impl ();
 
   vec<dstat> stats ();

@@ -52,6 +52,8 @@ dhashgateway::dhashgateway (ptr<axprt_stream> x,
   clntsrv = asrv::alloc (x, dhashgateway_program_1,
 	                 wrap (mkref (this), &dhashgateway::dispatch));
   dhcli = New refcounted<dhashcli> (node->get_vnode (0), dh);
+  vn = node->get_vnode(0); //save a copy of vnode 
+
 }
 
 dhashgateway::~dhashgateway ()
@@ -116,12 +118,71 @@ dhashgateway::dispatch (svccb *sbp)
         
       dhcli->queryndlist
 	(blockID (arg->blockID, arg->ctype),
-	 wrap (mkref (this), &dhashgateway::nodelist_cb, sbp));
+	 wrap (mkref (this), &dhashgateway::ndlist_cb, sbp));
+   }
+   case DHASHPROC_PAXOS_PREP:
+   {
+       paxos_prep_arg * arg = sbp->Xtmpl getarg<paxos_prep_arg> (); 
+       send_paxos_prepare(arg, sbp);  
+       break; 
+   }
+   case DHASHPROC_PAXOS_ACC:
+   {
+       paxos_accept_arg * arg = sbp->Xtmpl getarg<paxos_accept_arg>(); 
+       send_paxos_accept(arg, sbp); 
+       break; 
+   
    }
   default:
     sbp->reject (PROC_UNAVAIL);
     break;
   }
+}
+
+void 
+dhashgateway::handle_prepare(svccb * sdp, paxos_prepres* result, clnt_stat s)
+{
+    sdp->reply(result); 
+}
+
+void 
+dhashgateway::handle_accept(svccb * sdp, paxos_accept_res* result, clnt_stat s)
+{
+    sdp->reply(result); 
+}
+
+void 
+dhashgateway::handle_tmo(svccb * sdp)
+{
+    ref<paxos_prepres> result = New refcounted<paxos_prepres>(); 
+    result->acceptstatus = PROM_IG; //ignore 
+    sdp->reply(result); 
+}
+
+void 
+dhashgateway::handle_acc_tmo(svccb * sdp)
+{
+    ref<paxos_accept_res> result = New refcounted<paxos_accept_res>(); 
+    result->accept = false; //ignore 
+    sdp->reply(result); 
+}
+
+void 
+dhashgateway::send_paxos_prepare(paxos_prep_arg* arg, svccb * sdp)
+{
+    ref<paxos_prep_arg> arg2 = New refcounted<paxos_prep_arg>(); 
+    *arg2 = *arg; 
+    paxos_prepres* result = New paxos_prepres();  
+    vn->doRPC(arg->nd, paxos_program_1, PAXOS_PREPARE, arg2, result, wrap(this, &dhashgateway::handle_prepare,sdp,result)); 
+}
+
+void
+dhashgateway::send_paxos_accept(paxos_accept_arg *  arg, svccb * sdp) 
+{
+    ref<paxos_accept_arg> arg2 = New refcounted<paxos_accept_arg>(); 
+    *arg2 = *arg; 
+    paxos_accept_res* result = New paxos_accept_res();  
+    vn->doRPC(arg->nd, paxos_program_1, PAXOS_ACCEPT, arg2, result, wrap(this, &dhashgateway::handle_accept,sdp,result)); 
 }
 
 void
@@ -167,9 +228,18 @@ dhashgateway::retrieve_cb (svccb *sbp, dhash_stat stat,
 void
 dhashgateway::ndlist_cb(svccb * sbp, dhash_stat stat, ptr<dhash_block> block, route path)
 {
-	dhash_retrieve_res res;
-	res.stat = stat; 
-	res.path = path; 
+	dhash_ndlist_res res;
+    if(stat == DHASH_OK)
+        res.success = true;   
+    else
+        res.success = false; 
+    res.route.setsize(path.size()); 
+	 
+    for(size_t i=0;i<path.size();++i)
+    {
+        path[i]->fill_node(res.route[i]); 
+    }  
+
 	sbp->reply(&res); 
 
 }

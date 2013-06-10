@@ -30,7 +30,8 @@ chordinclude_HEADERS = \
 		       dhblock_chash.h \
 		       dhblock_keyhash.h \
 		       dhblock_replicated.h \
-		       dhblock_noauth.h
+		       dhblock_noauth.h 
+
 
 libdhashclient_a_SOURCES = \
 			   dhashclient.C \
@@ -75,7 +76,7 @@ libdhash_a_SOURCES = \
 		     dhblock_chash_srv.C \
 		     dhblock_replicated_srv.C \
 		     dhblock_keyhash_srv.C \
-		     dhblock_noauth_srv.C
+		     dhblock_noauth_srv.C 
 
 dist-hook:
 	cd $(distdir) && rm -f $(RPCBUILT)

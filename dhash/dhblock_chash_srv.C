@@ -56,9 +56,10 @@ dhblock_chash_srv::dhblock_chash_srv (ptr<vnode> node,
 				      str dbsock,
 				      str dbname,
 				      ptr<chord_trigger_t> t, 
-				      str paxosock) :
+				      str paxosock, 
+				      str p2psock) :
   dhblock_srv (node, cli, DHASH_CONTENTHASH, msock,
-      dbsock, dbname, false, t, paxosock),
+      dbsock, dbname, false, t, paxosock,p2psock),
   last_repair (node->my_pred ()->id ()),
   maint_pending (false),
   cache_hits (0),

@@ -22,7 +22,8 @@ dhblock_srv::dhblock_srv (ptr<vnode> node,
 			  str dbname,
 			  bool hasaux,
 			  ptr<chord_trigger_t> t,
-			  str pxsock ) :
+			  str pxsock,
+			  str p2psock) :
   repair_tcb (NULL),
   ctype (c),
   db (New refcounted<adb> (dbsock, dbname, hasaux, t)),
@@ -34,7 +35,8 @@ dhblock_srv::dhblock_srv (ptr<vnode> node,
   repair_read_bytes (0),
   repair_sent_bytes (0),
   repairs_completed (0),
-  expired_repairs (0) 
+  expired_repairs (0) ,
+  p2psocket (p2psock)
   
 {
   warn << "opened " << dbsock << " with space " << dbname 
@@ -116,11 +118,13 @@ dhblock_srv::paxos_init()
 {
 	paxos_dhashinfo_t dhi; 
 	node->my_location ()->fill_node (dhi.host);
-        dhi.ctype = ctype;
-        dhi.dbsock = db->dbsock ();
-        dhi.dbname = db->name ();
-        dhi.hasaux = db->hasaux ();
-	paxos_status * res = New paxos_status(PAXOS_OK); 
+    dhi.ctype = ctype;
+    dhi.dbsock = db->dbsock ();
+    dhi.dbname = db->name ();
+    dhi.hasaux = db->hasaux ();
+	dhi.p2psocket = p2psocket; 
+	ref<paxos_status> res = New refcounted<paxos_status>();
+    res->sts = PAXOS_OK;  
 	paxost->call(PAXOS_INIT, &dhi, res, wrap(this, &dhblock_srv::paxosinitcb,res)); 
 
 	warn<<"end of calling paxos_init\n"; 
@@ -130,10 +134,10 @@ dhblock_srv::paxos_init()
 void 
 dhblock_srv::paxosinitcb(paxos_status * res, clnt_stat err)
 {
-	if (err || *res)
-	  warn << "Paxos initialization failed for " 
-		<< db->name () << ": " << err << "/" << *res << "\n";
-	delete res;
+	if (err || res->sts != PAXOS_OK)
+	  warn << "Paxos initialization failed for \n"; 
+
+	//delete res;
 
 	warn<<"Paxos initialization succeeds"; 
 

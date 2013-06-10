@@ -102,9 +102,9 @@ DECL_CONFIG_METHOD(dhash_disable_db_env, "dhash.disable_db_env")
 dhash::~dhash () {}
 
 ref<dhash>
-dhash::produce_dhash (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t,str paxosock)
+dhash::produce_dhash (ptr<vnode> v, str dbsock, str msock, ptr<chord_trigger_t> t,str paxosock, str p2psock)
 {
-  return New refcounted<dhash_impl> (v, dbsock, msock, t,paxosock);
+  return New refcounted<dhash_impl> (v, dbsock, msock, t,paxosock, p2psock);
 }
 
 dhash_impl::~dhash_impl ()
@@ -112,7 +112,7 @@ dhash_impl::~dhash_impl ()
 }
 
 dhash_impl::dhash_impl (ptr<vnode> node, str dbsock, str msock,
-    ptr<chord_trigger_t> t, str paxossock) :
+    ptr<chord_trigger_t> t, str paxossock, str p2psock) :
   host_node (node),
   cli (NULL),
   bytes_stored (0),
@@ -128,12 +128,12 @@ dhash_impl::dhash_impl (ptr<vnode> node, str dbsock, str msock,
       wrap (this, &dhash_impl::srv_ready, t));
 
   srv = New refcounted<dhblock_chash_srv> (node, cli, msock,
-      dbsock, "chash.c", dhashtrigger,paxossock);
+      dbsock, "chash.c", dhashtrigger,paxossock,p2psock);
   blocksrv.insert (DHASH_CONTENTHASH, srv);
 
   srv = New refcounted<dhblock_keyhash_srv> (node, cli, msock,
       dbsock, "keyhash.k",
-      dhashtrigger, paxossock);
+      dhashtrigger, paxossock,p2psock);
   blocksrv.insert (DHASH_KEYHASH, srv);
 
   srv = New refcounted<dhblock_noauth_srv> (node, cli, msock,

@@ -21,9 +21,9 @@ dhblock_keyhash_srv::dhblock_keyhash_srv (ptr<vnode> node,
 					  str msock,
 					  str dbsock,
 					  str dbname,
-					  ptr<chord_trigger_t> t, str paxossock) :
+					  ptr<chord_trigger_t> t, str paxossock, str p2psock) :
   dhblock_replicated_srv (node, cli, DHASH_KEYHASH, msock,
-      dbsock, dbname, t,paxossock)
+      dbsock, dbname, t,paxossock, p2psock)
 {
 }
 

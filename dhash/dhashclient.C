@@ -39,12 +39,19 @@
 #include "dmalloc.h"
 #endif
 #include "misc_utils.h"
+#include "multicast.h"
+#include "libpaxos_priv.h" 
+#include "paxos_prot.h" 
+
+
+#define LEARNER "127.0.0.1",6003
+ 
 
 /*
  * dhashclient
  */
 
-dhashclient::dhashclient (str sockname)
+dhashclient::dhashclient (str sockname, str paxossock )
 {
   int fd = unixsocket_connect(sockname);
   if (fd < 0) {
@@ -54,11 +61,28 @@ dhashclient::dhashclient (str sockname)
 
   gwclnt = aclnt::alloc
     (axprt_unix::alloc (fd, 1024*1025), dhashgateway_program_1);
+
+  if(paxossock!="")
+  {
+       int fd2 = unixsocket_connect(paxossock);
+       if (fd2 < 0) {
+            fatal ("dhashclient: Error connecting to %s: %s\n",
+	     paxossock.cstr (), strerror (errno));
+      }
+
+       paxoslnt = aclnt::alloc
+         (axprt_unix::alloc (fd, 1024*1025), paxos_program_1);
+   }
+  
 }
 
-dhashclient::dhashclient (ptr<axprt_stream> xprt)
+dhashclient::dhashclient (ptr<axprt_stream> xprt,ptr<axprt_stream> xprt2)
 {
   gwclnt = aclnt::alloc (xprt, dhashgateway_program_1);
+
+  if(xprt2!=NULL)
+  paxoslnt = aclnt::alloc (xprt2, paxos_program_1);
+
 }
 
 void
@@ -189,15 +213,16 @@ dhashclient::insertcb (cbinsertgw_t cb, bigint key,
 
 
 void 
-dhashclient::paxos_cb(dver vid ,cb_cret cb, bigint key, ref<paxos_status> stat, 
+dhashclient::paxos_cb(dver vid ,cb_cret2 cb, bigint key, ptr<paxos_status> stat, 
 				 clnt_stat err)
 {
 	  warnx<<"paxos call back received for  "<<key<<"\n"; 
-	  paxos_status stat; 
+	 
+	  multicast_receiver* pr = mcast_receiver_new(LEARNER); 
 	  
-	  if(ret)
+	  if(stat->sts == PAXOS_ERR)
 	  {
-		stat = PAXOS_RPC_ERROR; 
+		warn<<"paxos proposing update for client\n"; 
 
 	  }
 	  else
@@ -205,51 +230,45 @@ dhashclient::paxos_cb(dver vid ,cb_cret cb, bigint key, ref<paxos_status> stat,
 		//using multicast to listen to the paxos decision from acceptors
 		while(1)
 		{
-			multicast_msg * msg; 
+			multicast_msg * mmsg; 
 			mmsg = mcast_recv(pr); 
 
-			assert(msg-> type == PAXOS_ACC_VER); 
-
-			if(msg -> umsec > arg->msec)
+			if(vid == *(dver*)mmsg->data)
 			{
-
-
-
-				if( msg->dver == arg->dver)
-				{
-					warn<<"get accepted by acceptor\n"; 
-					
-
-				}
-				else
-				{
-					warn<<"not able to get accepted by acceptor\n"; 
-
-				}
+				//data version gets accepted 
+				warn<<"data version "<<vid<<" get accepted\n"; 
+				exit(1); 
+				
 			}
+			else
+			{
+				warn<<"data version and mmsg returned not the same, expected: "<<vid<< " got:"<<*(dver*)mmsg->data<<"\n"; 
+				exit(2); 
 
+			} 
+
+            exit(3); 
 
 		}
 
-
 	  }
-	  (*cb) (ret, NULL, e_path); 
+	  
+	  (*cb) (DHASH_OK); 
 }
 
 
 
 void
-dhashclient::update (bigint key, cb_cret cb)
+dhashclient::update (bigint key, cb_cret2 cb)
 {
 	 //starting to use paxos to submit transactions 
 
-	 ref<paxos_client_arg> arg = New refcounted<paxos_client_arg> ();
-	 ref<paxos_status > stat  = New refcounted<paxos_status>(); 
-
+	 paxos_client_arg arg;
+	 ref<paxos_status> stat = New refcounted<paxos_status>(); 
 	 
-	 arg->id= key; 
-	 arg->vid = 255; 
-	 paxosint->call(PAXOS_CLIENT_REQ, &arg,stat,wrap(this, &dhashclient::paxos_cb, vid, cb, key,stat)); 
+	 arg.key= key; 
+	 arg.id = 255; 
+	 paxoslnt->call(PAXOS_CLIENT_REQ, &arg, stat,wrap(this, &dhashclient::paxos_cb,arg.id, cb, key,stat)); 
 	 
 }
 
